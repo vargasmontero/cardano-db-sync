@@ -6,22 +6,24 @@
 #   docker load -i $(nix-build -A dockerImage.dbSync --no-out-link)
 #   docker load -i $(nix-build -A dockerImage.dbSyncExtended --no-out-link)
 #
-# cardano-tx-submit
-#  To launch with provided mainnet configuration
+#  cardano-db-sync and cardano-db-sync-extended are interchangeable in the following:
 #
-#    docker run -v /data -e NETWORK=mainnet inputoutput/cardano-tx-submit:<TAG>
+#  To launch with provided mainnet or testnet configuration
 #
-#  To launch with provided testnet configuration
+#    docker run \
+#      -v $PATH_TO/node.socket:/data/node.socket \
+#      -v $PATH_TO/pgpass:/config/pgpass \
+#      -e NETWORK=mainnet|testnet \
+#      inputoutput/cardano-db-sync:<TAG>
 #
-#    docker run -e NETWORK=testnet inputoutput/cardano-tx-submit:<TAG>
+#  To launch with custom config, mount a dir containing config.yaml, genesis.json,
+#  topology.json, and pgpass into /config
 #
-#  To launch with custom config, mount a dir containing config.json, genesis.json,
-#  and topology.json into /config
+#    docker run \
+#      -v $PATH_TO/node.socket:/data/node.socket \
+#      -v $PATH_TO/config:/config \
+#      inputoutput/cardano-db-sync:<TAG>
 #
-#    docker run -v $PATH_TO/config:/config inputoutput/cardano-tx-submit:<TAG>
-#
-# cardano-db-sync
-#  docker run -v $PATH_TO/pgpass:/config/pgpass inputoutput/cardano-db-sync:<TAG>
 ############################################################################
 
 { iohkNix
