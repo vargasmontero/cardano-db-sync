@@ -17,7 +17,7 @@
 #      inputoutput/cardano-db-sync:<TAG>
 #
 #  To launch with custom config, mount a dir containing config.yaml, genesis.json,
-#  topology.json, and pgpass into /config
+#  and pgpass into /config
 #
 #    docker run \
 #      -v $PATH_TO/node.socket:/data/node.socket \
@@ -80,14 +80,22 @@ let
     '';
   };
   dbSyncDockerImage = let
+    clusterStatements = lib.concatStringsSep "\n" (lib.mapAttrsToList (_: value: value) (commonLib.forEnvironments (env: ''
+      elif [[ "$NETWORK" == "${env.name}" ]]; then
+        exec ${scripts.${env.name}.cardano-db-sync}
+    '')));
     entry-point = writeScriptBin "entry-point" ''
       #!${runtimeShell}
-      #echo $NETWORK
       if [[ -d /config ]]; then
-        echo PGPASSFILE = "/config/pgpass";
-        exec ${cardano-db-sync}/bin/cardano-db-sync
+         exec ${cardano-db-sync}/bin/cardano-db-sync \
+           --socket-path /data/node.socket \
+           --genesis-file /config/genesis.json \
+           --config /data/config.yaml \
+           --schema-dir schema/
+      ${clusterStatements}
       else
-        echo "Please mount the pgpass file with credentials for postgres in /config"
+        echo "Please set a NETWORK environment variable to one of: mainnet/testnet"
+        echo "Or mount a /config volume containing: config.yaml, genesis.json, pgpass"
       fi
     '';
   in dockerTools.buildImage {
@@ -98,41 +106,6 @@ let
     contents = [ entry-point ];
     config = {
       EntryPoint = [ "${entry-point}/bin/entry-point" ];
-      ExposedPorts = {
-        "8100/tcp" = {};
-      };
-    };
-  };
-  dbSyncExtendedDockerImage = let
-    clusterStatements = lib.concatStringsSep "\n" (lib.mapAttrsToList (_: value: value) (commonLib.forEnvironments (env: ''
-      elif [[ "$NETWORK" == "${env.name}" ]]; then
-        exec ${scripts.${env.name}.tx-submit}
-    '')));
-    entry-point = writeScriptBin "entry-point" ''
-      #!${runtimeShell}
-      if [[ -d /config ]]; then
-         exec ${cardano-tx-submit-webapi}/bin/cardano-tx-submit-webapi \
-           --socket-path /data/node.socket \
-           --genesis-file /config/genesis.json \
-           --port 8101 \
-           --config /data/config.yaml
-      ${clusterStatements}
-      else
-        echo "Please set a NETWORK environment variable to one of: mainnet/testnet"
-        echo "Or mount a /config volume containing: config.yaml and genesis.json"
-      fi
-    '';
-  in dockerTools.buildImage {
-    name = "${dbSyncExtendedRepoName}";
-    fromImage = baseImage;
-    tag = "${gitrev}";
-    created = "now";   # Set creation date to build time. Breaks reproducibility
-    contents = [ entry-point ];
-    config = {
-      EntryPoint = [ "${entry-point}/bin/entry-point" ];
-      ExposedPorts = {
-        "8101/tcp" = {};
-      };
     };
   };
 
