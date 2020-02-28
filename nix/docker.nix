@@ -114,5 +114,5 @@ let
 
 in {
   dbSync = dbSyncDockerImage;
-  dbSyncExtended = dbSyncExtendedDockerImage;
+  #dbSyncExtended = dbSyncExtendedDockerImage;
 }
