@@ -74,9 +74,12 @@ let
       socat             # Utility for bidirectional data transfer
       utillinux         # System utilities for Linux
     ];
+
+    # FIXME: Replace this to reduce image build times, as per:
+    # https://github.com/input-output-hk/cardano-explorer/blob/master/docker/default.nix#L242
     # set up /tmp (override with TMPDIR variable)
     extraCommands = ''
-      mkdir -m 0777 tmp
+      mkdir -m 1777 tmp
     '';
   };
   dbSyncDockerImage = let
