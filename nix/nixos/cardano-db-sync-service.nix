@@ -2,7 +2,13 @@
 
 let
   cfg = config.services.cardano-db-sync;
-  self = import ../. {};
+  self = import ../.. {};
+  envConfig = cfg.environment;
+  explorerConfig = {
+    inherit (envConfig.nodeConfig) RequiresNetworkMagic GenesisHash;
+    NetworkName = cfg.cluster;
+  } // cfg.logConfig;
+  configFile = __toFile "config.json" (__toJSON explorerConfig);
 in {
   options = {
     services.cardano-db-sync = {
@@ -16,9 +22,25 @@ in {
         internal = true;
         type = lib.types.path;
       };
+      environment = lib.mkOption {
+        type = lib.types.nullOr lib.types.attrs;
+        default = pkgs.iohkNix.cardanoLib.environments.${cfg.cluster};
+      };
+      cluster = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        description = "cluster name";
+      };
+      logConfig = lib.mkOption {
+        type = lib.types.attrs;
+        default = pkgs.iohkNix.cardanoLib.defaultExplorerLogConfig;
+      };
+      socketPath = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+      };
       package = lib.mkOption {
         type = lib.types.package;
-        default = (import ../. {}).cardanoRestHaskellPackages.cardano-db-sync.components.exes.cardano-db-sync;
+        default = self.cardano-db-sync;
       };
       postgres = {
         socketdir = lib.mkOption {
@@ -50,7 +72,11 @@ in {
       pgpass = builtins.toFile "pgpass" "${cfg.postgres.socketdir}:${toString cfg.postgres.port}:${cfg.postgres.database}:${cfg.postgres.user}:*";
       script = pkgs.writeShellScript "cardano-db-sync" ''
         export PGPASSFILE=${cfg.pgpass}
-        exec ${cfg.package}/bin/cardano-db-sync
+        exec ${cfg.package}/bin/cardano-db-sync \
+          --config ${configFile} \
+          --genesis-file ${envConfig.genesisFile} \
+          --socket-path ${cfg.socketPath} \
+          --schema-dir ${../../schema}
       '';
     };
     systemd.services.cardano-db-sync = {

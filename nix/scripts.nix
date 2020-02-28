@@ -5,8 +5,10 @@ let
       services.cardano-db-sync = {
         enable = true;
         postgres.user = "*";
+        environment = envConfig;
+        cluster = envConfig.name;
       };
-      services.cardano-db-sync-extended-api = {
+      services.cardano-db-sync-extended = {
         enable = true;
         environment = envConfig;
         network = envConfig.name;

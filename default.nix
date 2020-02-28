@@ -31,6 +31,7 @@ let
   dockerImage = let
     stateDir = "/data";
     defaultConfig = rec {
+      _file = toString ./default.nix;
       services.cardano-db-sync.socketPath = stateDir + "/node.socket";
     };
     customConfig' = defaultConfig // customConfig;

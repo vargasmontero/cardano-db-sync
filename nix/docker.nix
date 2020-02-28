@@ -85,7 +85,8 @@ let
   dbSyncDockerImage = let
     clusterStatements = lib.concatStringsSep "\n" (lib.mapAttrsToList (_: value: value) (commonLib.forEnvironments (env: ''
       elif [[ "$NETWORK" == "${env.name}" ]]; then
-        exec ${scripts.${env.name}.cardano-db-sync}
+        ${if (env ? nodeConfig) then "exec ${scripts.${env.name}.db-sync}"
+        else "echo db-sync not supported on ${env.name} ; exit 1"}
     '')));
     entry-point = writeScriptBin "entry-point" ''
       #!${runtimeShell}

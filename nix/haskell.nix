@@ -10,8 +10,36 @@
 , compiler ? config.haskellNix.compiler or "ghc865"
 # Enable profiling
 , profiling ? config.haskellNix.profiling or false
+, postgresql
 }:
 let
+  preCheck = ''
+    echo pre-check
+    initdb --encoding=UTF8 --locale=en_US.UTF-8 --username=postgres $NIX_BUILD_TOP/db-dir
+    postgres -D $NIX_BUILD_TOP/db-dir -k /tmp &
+    PSQL_PID=$!
+    sleep 10
+    if (echo '\q' | psql -h /tmp postgres postgres); then
+      echo "PostgreSQL server is verified to be started."
+    else
+      echo "Failed to connect to local PostgreSQL server."
+      exit 2
+    fi
+    ls -ltrh $NIX_BUILD_TOP
+    DBUSER=nixbld
+    DBNAME=nixbld
+    export PGPASSFILE=$NIX_BUILD_TOP/pgpass
+    echo "/tmp:5432:$DBUSER:$DBUSER:*" > $PGPASSFILE
+    cp -vir ${../schema} ../schema
+    chmod 600 $PGPASSFILE
+    psql -h /tmp postgres postgres <<EOF
+      create role $DBUSER with createdb login password '$DBPASS';
+      alter user $DBUSER with superuser;
+      create database $DBNAME with owner = $DBUSER;
+      \\connect $DBNAME
+      ALTER SCHEMA public   OWNER TO $DBUSER;
+    EOF
+  '';
 
   # This creates the Haskell package set.
   # https://input-output-hk.github.io/haskell.nix/user-guide/projects/
@@ -22,7 +50,7 @@ let
       # Add source filtering to local packages
       {
         packages.cardano-db-sync.src = haskell-nix.haskellLib.cleanGit
-          { src = ../.; subDir = "cardano-sync-db"; };
+          { src = ../.; subDir = "cardano-db-sync"; };
         packages.cardano-db-sync-extneded.src = haskell-nix.haskellLib.cleanGit
           { src = ../.; subDir = "cardano-db-sync-extended"; };
       }
@@ -37,6 +65,12 @@ let
         packages.cardano-db-sync.configureFlags = [ "--ghc-option=-Wall" "--ghc-option=-Werror" ];
         packages.cardano-db-sync-extended.configureFlags = [ "--ghc-option=-Wall" "--ghc-option=-Werror" ];
         enableLibraryProfiling = profiling;
+      }
+      {
+        packages.cardano-db.components.tests.test-db = {
+          build-tools = [ postgresql ];
+          inherit preCheck;
+        };
       }
     ];
     pkg-def-extras = [
