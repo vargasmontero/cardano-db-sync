@@ -79,7 +79,7 @@ let
       mkdir -m 0777 tmp
     '';
   };
-  dbSyncRepoNameDockerImage = let
+  dbSyncDockerImage = let
     entry-point = writeScriptBin "entry-point" ''
       #!${runtimeShell}
       #echo $NETWORK
@@ -103,7 +103,7 @@ let
       };
     };
   };
-  dbSyncExtendedRepoNameDockerImage = let
+  dbSyncExtendedDockerImage = let
     clusterStatements = lib.concatStringsSep "\n" (lib.mapAttrsToList (_: value: value) (commonLib.forEnvironments (env: ''
       elif [[ "$NETWORK" == "${env.name}" ]]; then
         exec ${scripts.${env.name}.tx-submit}
@@ -137,6 +137,6 @@ let
   };
 
 in {
-  dbSyncRepoName = dbSyncRepoNameDockerImage;
-  dbSyncExtendedRepoName = dbSyncExtendedRepoNameDockerImage;
+  dbSync = dbSyncDockerImage;
+  dbSyncExtended = dbSyncExtendedDockerImage;
 }
