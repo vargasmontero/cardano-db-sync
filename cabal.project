@@ -301,6 +301,13 @@ source-repository-package
   location: https://github.com/input-output-hk/ouroboros-network
   tag: 36861a97272de1e4de448925dd9bb9c0fddd80f6
   --sha256: 08jb0qj60i5dfsq17dyix3pdv05kg505n9kd7ps9j7dzl1p9pb2y
+  subdir: ouroboros-network-testing
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/ouroboros-network
+  tag: 36861a97272de1e4de448925dd9bb9c0fddd80f6
+  --sha256: 08jb0qj60i5dfsq17dyix3pdv05kg505n9kd7ps9j7dzl1p9pb2y
   subdir: ouroboros-consensus
 
 source-repository-package
@@ -309,6 +316,13 @@ source-repository-package
   tag: 36861a97272de1e4de448925dd9bb9c0fddd80f6
   --sha256: 08jb0qj60i5dfsq17dyix3pdv05kg505n9kd7ps9j7dzl1p9pb2y
   subdir: ouroboros-consensus/ouroboros-consensus-mock
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/ouroboros-network
+  tag: 36861a97272de1e4de448925dd9bb9c0fddd80f6
+  --sha256: 08jb0qj60i5dfsq17dyix3pdv05kg505n9kd7ps9j7dzl1p9pb2y
+  subdir: ouroboros-consensus/ouroboros-consensus-test-infra
 
 source-repository-package
   type: git
