@@ -86,21 +86,13 @@ instance DefinePrivacyAnnotation (WithMuxBearer
 
 instance DefineSeverity (WithMuxBearer
                              (ConnectionId LocalAddress)
-                             (TraceSendRecv (Handshake NodeToClientVersion CBOR.Term)))
+                             (TraceSendRecv (Handshake NodeToClientVersion CBOR.Term))) where
+  defineSeverity _ = Debug
 
 instance Transformable Text IO (WithMuxBearer
                              (ConnectionId LocalAddress)
                              (TraceSendRecv (Handshake NodeToClientVersion CBOR.Term))) where
   trTransformer = defaultTextTransformer
-
-
-instance Transformable Text IO (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock))) where
-  trTransformer = defaultTextTransformer
-
-
-instance DefinePrivacyAnnotation (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock)))
-
-instance DefineSeverity (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock)))
 
 instance ToObject (WithMuxBearer
                              (ConnectionId LocalAddress)
@@ -110,6 +102,16 @@ instance ToObject (WithMuxBearer
              , "bearer" .= show b
              , "event" .= show ev
              ]
+
+
+instance Transformable Text IO (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock))) where
+  trTransformer = defaultTextTransformer
+
+
+instance DefinePrivacyAnnotation (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock)))
+
+instance DefineSeverity (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock))) where
+  defineSeverity _ = Debug
 
 instance ToObject (TraceSendRecv (ChainSync ByronBlock (Tip ByronBlock))) where
   toObject _verb msg =

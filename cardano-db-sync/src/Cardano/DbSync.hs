@@ -28,9 +28,9 @@ import           Cardano.Binary (unAnnotated)
 import           Control.Tracer (Tracer)
 
 import qualified Cardano.BM.Setup as Logging
-import           Cardano.BM.Data.Tracer (ToLogObject (..))
-import qualified Cardano.BM.Data.Tracer as Logging
-import qualified Cardano.BM.Data.Severity as Logging
+import           Cardano.BM.Data.Tracer (ToLogObject (..), annotateSeverity)
+import           Cardano.BM.Tracing
+-- import qualified Cardano.BM.Data.Severity as Logging
 import           Cardano.BM.Trace (Trace, appendName, logError, logInfo)
 -- import qualified Cardano.BM.Trace as Logging
 
@@ -176,7 +176,7 @@ runDbSyncNode plugin enp =
 mkTracer :: DbSyncNodeConfig -> IO (Trace IO Text)
 mkTracer enc =
   if not (encEnableLogging enc)
-    then pure Logging.nullTracer
+    then pure nullTracer
     else liftIO $ Logging.setupTrace (Right $ encLoggingConfig enc) "db-sync-node"
 
 
@@ -227,15 +227,15 @@ runDbSyncNodeNodeClient iocp trce plugin nodeConfig (SocketPath socketPath) = do
     (localInitiatorNetworkApplication trce plugin nodeConfig txv)
   where
     errorPolicyTracer :: Tracer IO (WithAddr SockAddr ErrorPolicyTrace)
-    errorPolicyTracer = toLogObject $ appendName "ErrorPolicy" (Logging.setSeverity Logging.Debug trce)
+    errorPolicyTracer = annotateSeverity $ toLogObject' StructuredLogging MaximalVerbosity $ appendName "ErrorPolicy" trce
     muxTracer :: Show peer => Tracer IO (WithMuxBearer peer MuxTrace)
-    muxTracer = toLogObject $ appendName "Mux" (Logging.setSeverity Logging.Info trce)
+    muxTracer = annotateSeverity $ toLogObject' StructuredLogging MaximalVerbosity $ appendName "Mux" trce
     subscriptionTracer :: Tracer IO (Identity (SubscriptionTrace LocalAddress))
-    subscriptionTracer = toLogObject $ appendName "Subscription" (Logging.setSeverity Logging.Debug trce)
+    subscriptionTracer = annotateSeverity $ toLogObject' StructuredLogging MaximalVerbosity $ appendName "Subscription" trce
     handshakeTracer :: Tracer IO (WithMuxBearer
                           (ConnectionId LocalAddress)
                           (TraceSendRecv (Handshake NodeToClientVersion CBOR.Term)))
-    handshakeTracer = toLogObject $ appendName "Handshake" (Logging.setSeverity Logging.Debug trce)
+    handshakeTracer = annotateSeverity $ toLogObject' StructuredLogging MaximalVerbosity $ appendName "Handshake" trce
 
 
 localInitiatorNetworkApplication
