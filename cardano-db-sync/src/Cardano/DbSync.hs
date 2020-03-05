@@ -29,8 +29,10 @@ import           Control.Tracer (Tracer)
 
 import qualified Cardano.BM.Setup as Logging
 import           Cardano.BM.Data.Tracer (ToLogObject (..))
+import qualified Cardano.BM.Data.Tracer as Logging
+import qualified Cardano.BM.Data.Severity as Logging
 import           Cardano.BM.Trace (Trace, appendName, logError, logInfo)
-import qualified Cardano.BM.Trace as Logging
+-- import qualified Cardano.BM.Trace as Logging
 
 import qualified Cardano.Chain.Genesis as Ledger
 import qualified Cardano.Chain.Genesis as Genesis
@@ -218,22 +220,22 @@ runDbSyncNodeNodeClient iocp trce plugin nodeConfig (SocketPath socketPath) = do
     ClientSubscriptionParams {
         cspAddress = Snocket.localAddressFromPath socketPath,
         cspConnectionAttemptDelay = Nothing,
-        cspErrorPolicies = networkErrorPolicies <> consensusErrorPolicy
+        cspErrorPolicies = networkErrorPolicies <> (consensusErrorPolicy {- (Proxy :: Proxy blk) -})
         }
 
     (NodeToClientVersionData { networkMagic = nodeNetworkMagic (Proxy @blk) nodeConfig })
     (localInitiatorNetworkApplication trce plugin nodeConfig txv)
   where
     errorPolicyTracer :: Tracer IO (WithAddr SockAddr ErrorPolicyTrace)
-    errorPolicyTracer = toLogObject $ appendName "ErrorPolicy" trce
+    errorPolicyTracer = toLogObject $ appendName "ErrorPolicy" (Logging.setSeverity Logging.Debug trce)
     muxTracer :: Show peer => Tracer IO (WithMuxBearer peer MuxTrace)
-    muxTracer = toLogObject $ appendName "Mux" trce
+    muxTracer = toLogObject $ appendName "Mux" (Logging.setSeverity Logging.Info trce)
     subscriptionTracer :: Tracer IO (Identity (SubscriptionTrace LocalAddress))
-    subscriptionTracer = toLogObject $ appendName "Subscription" trce
+    subscriptionTracer = toLogObject $ appendName "Subscription" (Logging.setSeverity Logging.Debug trce)
     handshakeTracer :: Tracer IO (WithMuxBearer
                           (ConnectionId LocalAddress)
                           (TraceSendRecv (Handshake NodeToClientVersion CBOR.Term)))
-    handshakeTracer = toLogObject $ appendName "Handshake" trce
+    handshakeTracer = toLogObject $ appendName "Handshake" (Logging.setSeverity Logging.Debug trce)
 
 
 localInitiatorNetworkApplication
