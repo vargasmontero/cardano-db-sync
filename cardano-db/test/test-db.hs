@@ -15,13 +15,7 @@ import           System.FilePath ((</>))
 
 main :: IO ()
 main = do
-  -- If the env is not set, set it to default.
-  maybePgPassFile <- lookupEnv "PGPASSFILE"
-  _ <- whenNothing maybePgPassFile $ do
-      currentDir        <- getCurrentDirectory
-      let pgPassFile    = currentDir </> "../config/pgpass"
-      setEnv "PGPASSFILE" pgPassFile
-      return pgPassFile
+  _ <- provideDefaultPgPassFile
 
   defaultMain $
     testGroup "Database"
@@ -30,8 +24,20 @@ main = do
       , Test.IO.Cardano.Db.TotalSupply.tests
       , Test.IO.Cardano.Db.Rollback.tests
       ]
+
+
+-- |If the env is not set, set it to default.
+provideDefaultPgPassFile :: IO String
+provideDefaultPgPassFile = do
+  maybePgPassFile <- lookupEnv "PGPASSFILE"
+  whenNothing maybePgPassFile $ do
+      currentDir <- getCurrentDirectory
+      let pgPassFile = currentDir </> "../config/pgpass"
+      setEnv "PGPASSFILE" pgPassFile
+      return pgPassFile
   where
     whenNothing :: Monad m => Maybe a -> m a -> m a
     whenNothing (Just x) _ = pure x
     whenNothing Nothing  m = m
+
 
